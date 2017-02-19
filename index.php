@@ -1,7 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: mordes
- * Date: 2017.02.18.
- * Time: 9:52
- */
+$time_start = microtime(true);
+session_start();
+$hitelesites = "OK";
+include("_!config.php");
+include("_kapcsolat.php");
+require_once("_fuggvenyek.php");
+require_once("_sql.php");
+

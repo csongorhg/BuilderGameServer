@@ -171,6 +171,7 @@ namespace BuilderGameServer
           return messageTypes::AUTHACCEPT;
         }
       }
+      $this->sqla->query("update " . server::tableUser . " set lastlogintime=now() where id='".$this->userID."';");
       return messageTypes::AUTHACCEPT;
     }
 
@@ -181,7 +182,7 @@ namespace BuilderGameServer
     {
       if ($this->sqla->egy_mezo_kiolvas("select userid from " . server::tableOnline . " where userid='" . $this->userID . "';") != "")
       {
-        $this->sqla->query("update " . server::tableOnline . " set lasthellotime = now()");
+        $this->sqla->query("update " . server::tableOnline . " set lasthellotime = now() where userid='".$this->userID."'");
         return messageTypes::LST;
       }
       else

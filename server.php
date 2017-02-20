@@ -1,9 +1,8 @@
 <?php
 
-require_once("_sql.php");
-
 namespace BuilderGameServer
 {
+  require_once("_sql.php");
 
   class messageTypes
   {
@@ -98,6 +97,10 @@ namespace BuilderGameServer
      */
     const AUTHUSERNAMEFAILED = 62;
 
+    /**
+     * Ismeretlen üzenet jött.
+     */
+    const UNKNOWN = 101010;
   }
 
   class server
@@ -117,17 +120,18 @@ namespace BuilderGameServer
      *
      * @var messageTypes
      */
-    private $commandIN = null;
+    private $messageIN = null;
 
     /**
      *
      * @var messageTypes
      */
-    private $commandOUT = null;
+    private $messageOUT = null;
 
     function __construct()
     {
-      $this->sqla = new sql("buildergameserver");
+      $this->sqla = new \sql("buildergameserver");
+      $this->messageIN = ellenoriz($_POST["message"]);
     }
 
     /**
@@ -141,70 +145,91 @@ namespace BuilderGameServer
     {
       if ((!isset($_POST["user"]) || (!isset($_POST["password"]))))
       {
-        return FALSE;
+        return messageTypes::AUTHFAILED;
       }
-      $this->userID = $this->sqla->egy_mezo_kiolvas("select id from ".server::tableUser." where name='" . ellenoriz($_POST["user"]) . "' and password='" . sha1(ellenoriz($_POST["password"])) . "'");
+      $this->userID = $this->sqla->egy_mezo_kiolvas("select id from " . server::tableUser . " where name='" . $user . "' and password='" . sha1($pass) . "'");
       if ($this->userID == "")
       {
-        if ($this->$this->sqla->egy_mezo_kiolvas("select id from ".server::tableUser." where name='" . ellenoriz($_POST["user"]) . "'"))
+        if ($this->sqla->egy_mezo_kiolvas("select id from " . server::tableUser . " where name='" . $user . "'"))
         {
-          $this->commandOUT = messageTypes::AUTHUSERNAMEFAILED;
+          return messageTypes::AUTHUSERNAMEFAILED;
         }
         else
         {
           //user felvitele
-          $this->sqla->query("insert into ".server::tableUser." (name, password) values ('" . ellenoriz($_POST["user"]) . "', '" . sha1(ellenoriz($_POST["password"])) . "')", true);
+          $this->sqla->query("insert into " . server::tableUser . " (name, password, lastlogintime) values ('" . $user . "', '" . sha1($pass) . "', now())", true);
           $this->userID = $this->sqla->mysql_insert_id;
-          $this->commandOUT = messageTypes::AUTHACCEPT;
+          //$this->commandOUT = messageTypes::AUTHACCEPT;
+          return messageTypes::AUTHACCEPT;
         }
       }
-      $this->commandOUT = messageTypes::AUTHACCEPT;
-      return $this->userID != "";
+      return messageTypes::AUTHACCEPT;
     }
 
-    private function authenticationError()
+    public function clearOldActiveUsers()
     {
-      return "message=" . messageTypes::AUTHFAILED;
-    }
-
-    private function authenticationAccept()
-    {
-      return "message=" . messageTypes::AUTHACCEPT;
-    }
-
-    public function clearOldActiveUsers(){
       
     }
-    
-    public function clearOldRegUsers(){
+
+    public function clearOldRegUsers()
+    {
       
     }
-    
-    
+
     /**
      * Elvégzi az adatbázisműveleteket.
      */
     public function process()
     {
-      
-    }
 
-    /**
-     * @return String Description A kimenetre kerülő string.
-     */
-    public function generateMessage()
-    {
-      switch ($this->commandOUT)
+      switch ($this->messageOUT = $this->authentication(ellenoriz($_POST["user"]), ellenoriz($_POST["password"])))
       {
-        case messageTypes::ATTACKACCEPT:
-
+        case messageTypes::AUTHACCEPT:
+          switch ($this->messageIN){
+            case messageTypes::HELLO:
+              break;
+            case messageTypes::ATTACK:
+              break;
+            case messageTypes::CONNECT:
+              break;
+            case messageTypes::DISCONNECT:
+              break;
+            case messageTypes::GETDATA:
+              break;
+            default:
+              $this->messageOUT = messageTypes::UNKNOWN;
+          }
           break;
-
-        default:
-          return null;
       }
     }
 
-  }
+    /**
+     * @return Array Description A kimenetre kerülő tömb.
+     */
+    public function generateMessage()
+    {
+      $out["message"] = $this->messageOUT;
+      switch ($this->messageOUT)
+      {
+        case messageTypes::LST:
 
+          break;
+
+      }
+      return $out;
+    }
+
+    public function testpage()
+    {
+      ?>
+      <form method="post" action="index.php">
+        MessageType<input type="text" name="message" value="<?php print(ellenoriz($_POST["message"]));?>"/><br>
+        User<input type="text" name="user" value="<?php print(ellenoriz($_POST["user"]));?>"/><br>
+        Password<input type="text" name="password" value="<?php print(ellenoriz($_POST["password"]));?>"/><br>
+        <input type="submit" value="post"/>
+      </form>
+      <?php
+    }
+
+  }
 }

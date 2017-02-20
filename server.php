@@ -98,9 +98,15 @@ namespace BuilderGameServer
     const AUTHUSERNAMEFAILED = 62;
 
     /**
+     * Az üzenet nem megfelelő.
+     */
+    const ERROR = 404;
+
+    /**
      * Ismeretlen üzenet jött.
      */
     const UNKNOWN = 101010;
+
   }
 
   class server
@@ -115,6 +121,8 @@ namespace BuilderGameServer
 
     const tableUser = "user";
     const tableData = "data";
+    const tableBattle = "battle";
+    const tableOnline = "online";
 
     /**
      *
@@ -139,7 +147,7 @@ namespace BuilderGameServer
      * Amennyiben a felhasználónév foglalt, AUTHUSERNAMEFAILED üzenetet állít be. Ha a felhasználónév és jelszó páros nem jó, akkor AUTHFAILED. Egyébként AUTHACCEPT
      * @param type $user
      * @param type $pass
-     * @return boolean
+     * @return messageTypes
      */
     private function authentication($user, $pass)
     {
@@ -166,6 +174,52 @@ namespace BuilderGameServer
       return messageTypes::AUTHACCEPT;
     }
 
+    /**
+     * return messageTypes
+     */
+    private function hello()
+    {
+      if ($this->sqla->egy_mezo_kiolvas("select userid from " . server::tableOnline . " where userid='" . $this->userID . "';") != "")
+      {
+        $this->sqla->query("update " . server::tableOnline . " set lasthellotime = now()");
+        return messageTypes::LST;
+      }
+      else
+      {
+        return messageTypes::ERROR;
+      }
+    }
+
+    /**
+     * return messageTypes
+     */
+    private function connect()
+    {
+      if (!isset($_POST["offense_soldier"]))
+      {
+        return messageTypes::ERROR;
+      }
+      if (!isset($_POST["defense_soldier"]))
+      {
+        return messageTypes::ERROR;
+      }
+      if ($this->sqla->egy_mezo_kiolvas("select userid from " . server::tableOnline . " where userid='" . $this->userID . "';") == "")
+      {
+        $this->sqla->query("insert into " . self::tableData . " (soldier) values (" . ellenoriz($_POST["offense_soldier"]) . ");", true);
+        $offensedata = $this->sqla->mysql_insert_id;
+
+        $this->sqla->query("insert into " . self::tableData . " (soldier) values (" . ellenoriz($_POST["defense_soldier"]) . ");", true);
+        $defensedata = $this->sqla->mysql_insert_id;
+
+        $this->sqla->query("insert into " . self::tableOnline . " (userid, lasthellotime, offensedata, defensedata) values (" . $this->userID . ", now(), " . $offensedata . ", " . $defensedata . " );", true);
+        return messageTypes::CONNECTACK;
+      }
+      else
+      {
+        return messageTypes::ERROR;
+      }
+    }
+
     public function clearOldActiveUsers()
     {
       
@@ -185,12 +239,15 @@ namespace BuilderGameServer
       switch ($this->messageOUT = $this->authentication(ellenoriz($_POST["user"]), ellenoriz($_POST["password"])))
       {
         case messageTypes::AUTHACCEPT:
-          switch ($this->messageIN){
+          switch ($this->messageIN)
+          {
             case messageTypes::HELLO:
+              $this->messageOUT = $this->hello();
               break;
             case messageTypes::ATTACK:
               break;
             case messageTypes::CONNECT:
+              $this->messageOUT = $this->connect();
               break;
             case messageTypes::DISCONNECT:
               break;
@@ -204,6 +261,23 @@ namespace BuilderGameServer
     }
 
     /**
+     * return Array
+     */
+    private function lst()
+    {
+      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from " . server::tableOnline . " inner join " . server::tableUser . " on " . server::tableOnline . ".userid = " . server::tableUser . ".id");
+      $ret = null;
+      if ($a != "")
+      {
+        foreach ($a as $k => $v)
+        {
+          $ret["user" . $v["userid"]] = $v["name"];
+        }
+      }
+      return $ret;
+    }
+
+    /**
      * @return Array Description A kimenetre kerülő tömb.
      */
     public function generateMessage()
@@ -212,9 +286,14 @@ namespace BuilderGameServer
       switch ($this->messageOUT)
       {
         case messageTypes::LST:
-
+          if (($a = $this->lst()) != "")
+          {
+            foreach ($a as $key => $value)
+            {
+              $out[$key] = $value;
+            }
+          }
           break;
-
       }
       return $out;
     }
@@ -223,13 +302,16 @@ namespace BuilderGameServer
     {
       ?>
       <form method="post" action="index.php">
-        MessageType<input type="text" name="message" value="<?php print(ellenoriz($_POST["message"]));?>"/><br>
-        User<input type="text" name="user" value="<?php print(ellenoriz($_POST["user"]));?>"/><br>
-        Password<input type="text" name="password" value="<?php print(ellenoriz($_POST["password"]));?>"/><br>
+        message<input type="text" name="message" value="<?php print(ellenoriz($_POST["message"])); ?>"/><br>
+        user<input type="text" name="user" value="<?php print(ellenoriz($_POST["user"])); ?>"/><br>
+        password<input type="text" name="password" value="<?php print(ellenoriz($_POST["password"])); ?>"/><br>
+        offense_soldier<input type="text" name="offense_soldier" value="<?php print(ellenoriz($_POST["offense_soldier"])); ?>"/><br>
+        defense_soldier<input type="text" name="defense_soldier" value="<?php print(ellenoriz($_POST["defense_soldier"])); ?>"/><br>
         <input type="submit" value="post"/>
       </form>
       <?php
     }
 
   }
+
 }

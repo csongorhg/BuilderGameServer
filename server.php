@@ -155,23 +155,23 @@ namespace BuilderGameServer
       {
         return messageTypes::AUTHFAILED;
       }
-      $this->userID = $this->sqla->egy_mezo_kiolvas("select id from " . server::tableUser . " where name='" . $user . "' and password='" . sha1($pass) . "'");
+      $this->userID = $this->sqla->egy_mezo_kiolvas("select id from " . self::tableUser . " where name='" . $user . "' and password='" . sha1($pass) . "'");
       if ($this->userID == "")
       {
-        if ($this->sqla->egy_mezo_kiolvas("select id from " . server::tableUser . " where name='" . $user . "'"))
+        if ($this->sqla->egy_mezo_kiolvas("select id from " . self::tableUser . " where name='" . $user . "'"))
         {
           return messageTypes::AUTHUSERNAMEFAILED;
         }
         else
         {
           //user felvitele
-          $this->sqla->query("insert into " . server::tableUser . " (name, password, lastlogintime) values ('" . $user . "', '" . sha1($pass) . "', now())", true);
+          $this->sqla->query("insert into " . self::tableUser . " (name, password, lastlogintime) values ('" . $user . "', '" . sha1($pass) . "', now())", true);
           $this->userID = $this->sqla->mysql_insert_id;
           //$this->commandOUT = messageTypes::AUTHACCEPT;
           return messageTypes::AUTHACCEPT;
         }
       }
-      $this->sqla->query("update " . server::tableUser . " set lastlogintime=now() where id='".$this->userID."';");
+      $this->sqla->query("update " . self::tableUser . " set lastlogintime=now() where id='" . $this->userID . "';");
       return messageTypes::AUTHACCEPT;
     }
 
@@ -180,9 +180,9 @@ namespace BuilderGameServer
      */
     private function hello()
     {
-      if ($this->sqla->egy_mezo_kiolvas("select userid from " . server::tableOnline . " where userid='" . $this->userID . "';") != "")
+      if ($this->sqla->egy_mezo_kiolvas("select userid from " . self::tableOnline . " where userid='" . $this->userID . "';") != "")
       {
-        $this->sqla->query("update " . server::tableOnline . " set lasthellotime = now() where userid='".$this->userID."'");
+        $this->sqla->query("update " . self::tableOnline . " set lasthellotime = now() where userid='" . $this->userID . "'");
         return messageTypes::LST;
       }
       else
@@ -204,7 +204,7 @@ namespace BuilderGameServer
       {
         return messageTypes::ERROR;
       }
-      if ($this->sqla->egy_mezo_kiolvas("select userid from " . server::tableOnline . " where userid='" . $this->userID . "';") == "")
+      if ($this->sqla->egy_mezo_kiolvas("select userid from " . self::tableOnline . " where userid='" . $this->userID . "';") == "")
       {
         $this->sqla->query("insert into " . self::tableData . " (soldier) values (" . ellenoriz($_POST["offense_soldier"]) . ");", true);
         $offensedata = $this->sqla->mysql_insert_id;
@@ -221,14 +221,23 @@ namespace BuilderGameServer
       }
     }
 
-    public function clearOldActiveUsers()
+    /**
+     * return messageTypes
+     */
+    private function attack()
     {
       
+      return messageTypes::ATTACKACCEPT;
+    }
+
+    public function clearOldActiveUsers()
+    {
+      return;
     }
 
     public function clearOldRegUsers()
     {
-      
+      return;      
     }
 
     /**
@@ -246,6 +255,7 @@ namespace BuilderGameServer
               $this->messageOUT = $this->hello();
               break;
             case messageTypes::ATTACK:
+              $this->messageOUT = $this->attack();
               break;
             case messageTypes::CONNECT:
               $this->messageOUT = $this->connect();
@@ -266,7 +276,7 @@ namespace BuilderGameServer
      */
     private function lst()
     {
-      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from " . server::tableOnline . " inner join " . server::tableUser . " on " . server::tableOnline . ".userid = " . server::tableUser . ".id");
+      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")");
       $ret = null;
       if ($a != "")
       {

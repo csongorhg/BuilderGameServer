@@ -221,12 +221,58 @@ namespace BuilderGameServer
       }
     }
 
+    private function fight($battleid)
+    {
+      print("Not implemented yet.");
+      /*
+        A battleid-n keresztül minden adat elérhető, ami a csata kiszámításához kell.
+       * Az onlne táblán keresztül a jelenlegi felállás, a battle táblán keresztül pedig az újat kell befrissíteni. Az attack függvény már mindent létrehozott, itt csak update kell.
+        ..........................
+       * 
+       *        */
+
+      //TESZT
+      print("<h1>Battle</h1>");
+      print_r_2($this->sqla->egy_rekord_kiolvas("select * from " . self::tableBattle . " where attackerid=" . $battleid . ";"));
+
+      //.................
+
+      $this->sqla->query("update " . self::tableBattle . " set complete=true where attackerid=" . $battleid . ";");
+    }
+
     /**
      * return messageTypes
      */
     private function attack()
     {
+      if (!isset($_POST["defenderid"]) || $_POST["defenderid"] == "")
+      {
+        return messageTypes::ERROR;
+      }
       
+      $id = ellenoriz($_POST["defenderid"]);
+      settype($id, "integer");
+      if ($id == $this->userID){
+        return messageTypes::ERROR;
+      }
+      $a = $id;
+      /* -------------TESZT MIATT INAKTÍV ----------- Megakadályozza, hogy újból harc legyen. Emiatt elsődleges kulcs hibát jelez, met új csatát nem tudott felvinni.
+        if (($a = $this->sqla->egy_mezo_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where  userid<>".$this->userID." and  userid='" . $id . "' and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")"))=="")
+        {
+        return messageTypes::ATTACKREFUSE;
+        }
+       * 
+       */
+      $this->sqla->query("insert into " . self::tableData . " values ();", true);
+      $newattackerdata = $this->sqla->mysql_insert_id;
+
+      $this->sqla->query("insert into " . self::tableData . " values ();", true);
+      $newdefenderdata = $this->sqla->mysql_insert_id;
+
+      $this->sqla->query("insert into " . self::tableBattle . " (attackerid, defenderid, newattackerdata, newdefenderdata) values (" . $this->userID . ", " . $a . ", " . $newattackerdata . ", " . $newdefenderdata . ");", true);
+
+      $this->fight($this->userID);
+
       return messageTypes::ATTACKACCEPT;
     }
 
@@ -237,7 +283,7 @@ namespace BuilderGameServer
 
     public function clearOldRegUsers()
     {
-      return;      
+      return;
     }
 
     /**
@@ -276,7 +322,7 @@ namespace BuilderGameServer
      */
     private function lst()
     {
-      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")");
+      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where userid<>".$this->userID." and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")");
       $ret = null;
       if ($a != "")
       {
@@ -316,8 +362,9 @@ namespace BuilderGameServer
         message<input type="text" name="message" value="<?php print(ellenoriz($_POST["message"])); ?>"/><br>
         user<input type="text" name="user" value="<?php print(ellenoriz($_POST["user"])); ?>"/><br>
         password<input type="text" name="password" value="<?php print(ellenoriz($_POST["password"])); ?>"/><br>
-        offense_soldier<input type="text" name="offense_soldier" value="<?php print(ellenoriz($_POST["offense_soldier"])); ?>"/><br>
-        defense_soldier<input type="text" name="defense_soldier" value="<?php print(ellenoriz($_POST["defense_soldier"])); ?>"/><br>
+        offense_soldier - kapcsolódáshoz<input type="text" name="offense_soldier" value="<?php print(ellenoriz($_POST["offense_soldier"])); ?>"/><br>
+        defense_soldier - kapcsolódáshoz<input type="text" name="defense_soldier" value="<?php print(ellenoriz($_POST["defense_soldier"])); ?>"/><br>
+        defenderid - támadáshoz<input type="text" name="defenderid"" value="<?php print(ellenoriz($_POST["defenderid"])); ?>"/><br>
         <input type="submit" value="post"/>
       </form>
       <?php

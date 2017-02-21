@@ -12,11 +12,11 @@ if (!isset($hitelesites) or ( $hitelesites != "OK"))
 
 
 $this->sql_tabla = "sql_hibak";
-$this->logtable = 2;
+$this->logtable = 0;
 //0 - semmi, 1 - csak a hibák, 2 - elsődleges kulcs is, 3 - minden
-$this->monitor = 1;
+$this->monitor = 2;
 //0 - semmi, 1 - csak a hibák, 2 - elsődleges kulcs is, 3 - minden
-$this->email = 1;
+$this->email = 0;
 //0 - semmi, 1 - csak a hibák, 2 - elsődleges kulcs is, 3 - minden
 
 global $hitelesites;

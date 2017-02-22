@@ -24,6 +24,7 @@ namespace BuilderGameServer
 
     /**
      * KLIENS: A kliens megtámad egy másik, online klienst.
+     * SZERVER: A szerver közli a klienssel, hogy megtámadták.
      */
     const ATTACK = 20;
 
@@ -68,19 +69,10 @@ namespace BuilderGameServer
     const DATA = 51;
 
     /**
-     * KLIENS: A kliens nyugtázza a megkapott adatokat. A nyugta válaszaként a szerver tájékoztatja a klienst, hogy a másik fél is nyugtázta-e. Amennyiben igen, feldolgozza a kapott adatokat. Ha nem, párszor újra nyugtáz.
+     * SZERVER: Még nincs adat a harc kimeneteléről. (Időzítési hibák miatt lett beépítve.)
      */
-    const GETDATAACK = 52;
-
-    /**
-     * SZERVER: A másik felhasználó letöltötte az adatokat.
-     */
-    const ANOTHERUSERACK = 53;
-
-    /**
-     * SZERVER: A másik felhasználó a megendegett időn belül nem töltötte le az adatokat.
-     */
-    const BACKTRACK = 54;
+    const NODATAYET = 52;
+    
 
     /**
      * SZERVER: A szerver visszautasítja a kapcsolatot, jelszó hiba.

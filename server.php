@@ -59,6 +59,11 @@ namespace BuilderGameServer
     const CONNECTACK = 41;
 
     /**
+     * SZERVER: Már kapcsolatban van. Amíg a hello üzenetek miatt ki nbem dobja, nem tud újra csatlakozni.
+     */
+    const ALREADYCONNECTED = 42;
+    
+    /**
      * KLIENS: A kliens lekéri a módosult adatokat.
      */
     const GETDATA = 50;
@@ -209,7 +214,7 @@ namespace BuilderGameServer
       }
       else
       {
-        return messageTypes::ERROR;
+        return messageTypes::ALREADYCONNECTED;
       }
     }
 
@@ -268,9 +273,10 @@ namespace BuilderGameServer
       return messageTypes::ATTACKACCEPT;
     }
 
-    public function clearOldActiveUsers()
+    public function clearOldOnlineUsers()
     {
-      return;
+      $this->sqla->query("delete from " . self::tableOnline . " where date_add(lasthellotime, interval 20 second) < now();");
+      $this->sqla->query("delete from " . self::tableData . " where id not in (select offensedata as r from ".self::tableOnline." union select defensedata as r from ".self::tableOnline.");");
     }
 
     public function clearOldRegUsers()
@@ -283,7 +289,7 @@ namespace BuilderGameServer
      */
     public function process()
     {
-
+      $this->clearOldOnlineUsers();
       switch ($this->messageOUT = $this->authentication(ellenoriz($_POST["user"]), ellenoriz($_POST["password"])))
       {
         case messageTypes::AUTHACCEPT:
@@ -331,6 +337,10 @@ namespace BuilderGameServer
      */
     public function generateMessage()
     {
+   /*   $x=0;
+      for($i=1;$i<10000000;$i++){
+        $x++;
+      }*/
       $out["message"] = $this->messageOUT;
       switch ($this->messageOUT)
       {

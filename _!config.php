@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 //Konfigurációs fájl. 
 //2016.05.13.
 //Tüske Balázs (www.programkeszites.hu)

@@ -1,7 +1,5 @@
 <?php
-//Konfigurációs fájl. 
-//2016.05.13.
-//Tüske Balázs (www.programkeszites.hu)
+
 global $hitelesites;
 if (!isset($hitelesites) or ($hitelesites!="OK")) { header("Location: index.php");exit;}
 

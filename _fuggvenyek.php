@@ -1,8 +1,6 @@
 <?php
 
-//Függvénykönyvtár az objektumokhoz
-//2016.05.08.
-//Tüske Balázs (www.programkeszites.hu)
+
 global $hitelesites;
 if (!isset($hitelesites) or ( $hitelesites != "OK"))
 {

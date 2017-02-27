@@ -62,7 +62,7 @@ namespace BuilderGameServer
      * SZERVER: Már kapcsolatban van. Amíg a hello üzenetek miatt ki nbem dobja, nem tud újra csatlakozni.
      */
     const ALREADYCONNECTED = 42;
-    
+
     /**
      * KLIENS: A kliens lekéri a módosult adatokat.
      */
@@ -77,7 +77,6 @@ namespace BuilderGameServer
      * SZERVER: Még nincs adat a harc kimeneteléről. (Időzítési hibák miatt lett beépítve.)
      */
     const NODATAYET = 52;
-    
 
     /**
      * SZERVER: A szerver visszautasítja a kapcsolatot, jelszó hiba.
@@ -180,6 +179,12 @@ namespace BuilderGameServer
       if ($this->sqla->egy_mezo_kiolvas("select userid from " . self::tableOnline . " where userid='" . $this->userID . "';") != "")
       {
         $this->sqla->query("update " . self::tableOnline . " set lasthellotime = now() where userid='" . $this->userID . "'");
+        $id = $this->sqla->egy_mezo_kiolvas("select id from " . self::tableUser . " where name='" . ellenoriz($_POST["defendername"]) . "';");
+        if ($this->sqla->egy_mezo_kiolvas("select defenderid from " . self::tableBattle . " where defenderid='" . $this->userID . "'") != "")
+        {
+          return messageTypes::ATTACK;
+        }
+
         return messageTypes::LST;
       }
       else
@@ -220,6 +225,16 @@ namespace BuilderGameServer
 
     private function fight($battleid)
     {
+      /*
+
+
+Az adatbázisban frissüljenek a rekordok a csata kimenetelének megfelelően.
+       * 
+       * 
+       * 
+       * 
+       * 
+       *        */
       //print("Not implemented yet.");
       /*
         A battleid-n keresztül minden adat elérhető, ami a csata kiszámításához kell.
@@ -230,8 +245,7 @@ namespace BuilderGameServer
 
       //TESZT
       //print("<h1>Battle</h1>");
-      print_r_2($this->sqla->egy_rekord_kiolvas("select * from " . self::tableBattle . " where attackerid=" . $battleid . ";"));
-
+      //print_r_2($this->sqla->egy_rekord_kiolvas("select * from " . self::tableBattle . " where attackerid=" . $battleid . ";"));
       //.................
 
       $this->sqla->query("update " . self::tableBattle . " set complete=true where attackerid=" . $battleid . ";");
@@ -246,19 +260,20 @@ namespace BuilderGameServer
       {
         return messageTypes::ERROR;
       }
-      
-      $id = $this->sqla->egy_mezo_kiolvas("select id from user where name='".  ellenoriz($_POST["defendername"])."';");
-      if ($id == $this->userID || $is==""){
+
+      $id = $this->sqla->egy_mezo_kiolvas("select id from " . self::tableUser . " where name='" . ellenoriz($_POST["defendername"]) . "';");
+      if ($id == $this->userID || $id == "")
+      {
         return messageTypes::ERROR;
       }
       $a = $id;
       /* -------------TESZT MIATT INAKTÍV ----------- Megakadályozza, hogy újból harc legyen. Emiatt elsődleges kulcs hibát jelez, met új csatát nem tudott felvinni.
-      */
-      if (($a = $this->sqla->egy_mezo_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where  userid<>".$this->userID." and  userid='" . $id . "' and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")"))=="")
+       */
+      if (($a = $this->sqla->egy_mezo_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where  userid<>" . $this->userID . " and  userid='" . $id . "' and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")")) == "")
       {
         return messageTypes::ATTACKREFUSE;
       }
-       /* 
+      /*
        */
       $this->sqla->query("insert into " . self::tableData . " values ();", true);
       $newattackerdata = $this->sqla->mysql_insert_id;
@@ -275,15 +290,31 @@ namespace BuilderGameServer
 
     public function clearOldOnlineUsers()
     {
-      $this->sqla->query("delete from " . self::tableOnline . " where date_add(lasthellotime, interval 20 second) < now();");
+      /*pucolás*/
       $this->sqla->query("delete from " . self::tableBattle . " where (attackerdownload=true and defenderdownload=true) or date_add(datetime, interval 100 second) < now();");
-
-      $this->sqla->query("delete from " . self::tableData . " where id not in (select offensedata as r from ".self::tableOnline." union select defensedata as r from ".self::tableOnline." union select newdefenderdata as r from ".self::tableData." union select newattackerdata as r from ".self::tableData.");");
+      $this->sqla->query("delete from " . self::tableOnline . " where date_add(lasthellotime, interval 20 second) < now();");
+      /*pucolás*/  
+      
+      
+      $this->sqla->query("delete from " . self::tableData . " where id not in (select offensedata as r from " . self::tableOnline . " union select defensedata as r from " . self::tableOnline . " union select newdefenderdata as r from " . self::tableBattle . " union select newattackerdata as r from " . self::tableBattle . ");");
     }
 
     public function clearOldRegUsers()
     {
       return;
+    }
+
+    /**
+     * return messageTypes
+     */
+    public function getData()
+    {
+      return $this->messageOUT = messageTypes::DATA;
+    }
+
+    public function data()
+    {
+      //A csata kimenetelének eredménye a $this->userid felhasználót érintve. Az lst()-eljáráshoz hasonlóan kel a kimenetet.
     }
 
     /**
@@ -309,6 +340,7 @@ namespace BuilderGameServer
             case messageTypes::DISCONNECT:
               break;
             case messageTypes::GETDATA:
+              $this->messageOUT = $this->getData();
               break;
             default:
               $this->messageOUT = messageTypes::UNKNOWN;
@@ -322,7 +354,7 @@ namespace BuilderGameServer
      */
     private function lst()
     {
-      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where userid<>".$this->userID." and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")");
+      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where userid<>" . $this->userID . " and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")");
       $ret = null;
       if ($a != "")
       {
@@ -339,10 +371,10 @@ namespace BuilderGameServer
      */
     public function generateMessage()
     {
-   /*   $x=0;
-      for($i=1;$i<10000000;$i++){
+      /*   $x=0;
+        for($i=1;$i<10000000;$i++){
         $x++;
-      }*/
+        } */
       $out["message"] = $this->messageOUT;
       switch ($this->messageOUT)
       {
@@ -355,8 +387,14 @@ namespace BuilderGameServer
             }
           }
           break;
-        case messageTypes::ATTACK:
-          
+        case messageTypes::GETDATA:
+          if (($a = $this->data()) != "")
+          {
+            foreach ($a as $key => $value)
+            {
+              $out[$key] = $value;
+            }
+          }
           break;
       }
       return $out;

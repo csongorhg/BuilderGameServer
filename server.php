@@ -225,6 +225,15 @@ namespace BuilderGameServer
 
     private function fight($battleid)
     {
+
+         $attacker = $this->sqla->query("select `data`.soldier from `data` inner join online on `data`.id = online.offensedata inner join battle on online.userid = battle.attackerid");
+        $deffender = $this->sqla->query("select `data`.soldier from `data` inner join online on `data`.id = online.defensedata inner join battle on online.userid = battle.defenderid");
+
+        if($attacker > $deffender){
+            $this->sqla->query("update battle set battle.attackeriswinner = 1");
+        }else{
+            $this->sqla->query("update battle set battle.attackeriswinner = 0");
+        }
       /*
 
 

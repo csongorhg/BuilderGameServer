@@ -211,7 +211,7 @@ namespace BuilderGameServer
         $this->sqla->query("insert into " . self::tableData . " (soldier) values (" . ellenoriz($_POST["offense_soldier"]) . ");", true);
         $offensedata = $this->sqla->mysql_insert_id;
 
-        $this->sqla->query("insert into " . self::tableData . " (soldier) values (" . ellenoriz($_POST["defense_soldier"]) . ");", true);
+        $this->sqla->query("insert into " . self::tableData . " (soldier, gold, wood, stone, food) values (" . ellenoriz($_POST["defense_soldier"]) .", ". ellenoriz($_POST["gold"]) .", ". ellenoriz($_POST["wood"]) .", ". ellenoriz($_POST["stone"]) .", ". ellenoriz($_POST["food"]) . ");", true);
         $defensedata = $this->sqla->mysql_insert_id;
 
         $this->sqla->query("insert into " . self::tableOnline . " (userid, lasthellotime, offensedata, defensedata) values (" . $this->userID . ", now(), " . $offensedata . ", " . $defensedata . " );", true);

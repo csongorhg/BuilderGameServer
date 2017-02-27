@@ -220,7 +220,7 @@ namespace BuilderGameServer
 
     private function fight($battleid)
     {
-      print("Not implemented yet.");
+      //print("Not implemented yet.");
       /*
         A battleid-n keresztül minden adat elérhető, ami a csata kiszámításához kell.
        * Az onlne táblán keresztül a jelenlegi felállás, a battle táblán keresztül pedig az újat kell befrissíteni. Az attack függvény már mindent létrehozott, itt csak update kell.
@@ -229,7 +229,7 @@ namespace BuilderGameServer
        *        */
 
       //TESZT
-      print("<h1>Battle</h1>");
+      //print("<h1>Battle</h1>");
       print_r_2($this->sqla->egy_rekord_kiolvas("select * from " . self::tableBattle . " where attackerid=" . $battleid . ";"));
 
       //.................
@@ -242,23 +242,23 @@ namespace BuilderGameServer
      */
     private function attack()
     {
-      if (!isset($_POST["defenderid"]) || $_POST["defenderid"] == "")
+      if (!isset($_POST["defendername"]) || $_POST["defendername"] == "")
       {
         return messageTypes::ERROR;
       }
       
-      $id = ellenoriz($_POST["defenderid"]);
-      settype($id, "integer");
-      if ($id == $this->userID){
+      $id = $this->sqla->egy_mezo_kiolvas("select id from user where name='".  ellenoriz($_POST["defendername"])."';");
+      if ($id == $this->userID || $is==""){
         return messageTypes::ERROR;
       }
       $a = $id;
       /* -------------TESZT MIATT INAKTÍV ----------- Megakadályozza, hogy újból harc legyen. Emiatt elsődleges kulcs hibát jelez, met új csatát nem tudott felvinni.
-        if (($a = $this->sqla->egy_mezo_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where  userid<>".$this->userID." and  userid='" . $id . "' and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")"))=="")
-        {
+      */
+      if (($a = $this->sqla->egy_mezo_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where  userid<>".$this->userID." and  userid='" . $id . "' and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")"))=="")
+      {
         return messageTypes::ATTACKREFUSE;
-        }
-       * 
+      }
+       /* 
        */
       $this->sqla->query("insert into " . self::tableData . " values ();", true);
       $newattackerdata = $this->sqla->mysql_insert_id;
@@ -276,7 +276,9 @@ namespace BuilderGameServer
     public function clearOldOnlineUsers()
     {
       $this->sqla->query("delete from " . self::tableOnline . " where date_add(lasthellotime, interval 20 second) < now();");
-      $this->sqla->query("delete from " . self::tableData . " where id not in (select offensedata as r from ".self::tableOnline." union select defensedata as r from ".self::tableOnline.");");
+      $this->sqla->query("delete from " . self::tableBattle . " where (attackerdownload=true and defenderdownload=true) or date_add(datetime, interval 100 second) < now();");
+
+      $this->sqla->query("delete from " . self::tableData . " where id not in (select offensedata as r from ".self::tableOnline." union select defensedata as r from ".self::tableOnline." union select newdefenderdata as r from ".self::tableData." union select newattackerdata as r from ".self::tableData.");");
     }
 
     public function clearOldRegUsers()
@@ -352,6 +354,9 @@ namespace BuilderGameServer
               $out[$key] = $value;
             }
           }
+          break;
+        case messageTypes::ATTACK:
+          
           break;
       }
       return $out;

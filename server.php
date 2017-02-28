@@ -355,9 +355,13 @@ Az adatbázisban frissüljenek a rekordok a csata kimenetelének megfelelően.
       return $this->messageOUT = messageTypes::DATA;
     }
 
-    public function data()
+    public function data($dataID, $tamado, $nyert)
     {
+        $ret = null;
+        $output = $this->sqla->egy_rekord_kiolvas("select soldier, gold, wood, stone, food from ". self::tableData . "where id = ".$dataID." limit 1;");
+
       //A csata kimenetelének eredménye a $this->userid felhasználót érintve. Az lst()-eljáráshoz hasonlóan kel a kimenetet.
+
     }
 
     /**

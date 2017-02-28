@@ -430,7 +430,7 @@ Az adatbázisban frissüljenek a rekordok a csata kimenetelének megfelelően.
             }
           }
           break;
-        case messageTypes::GETDATA:
+        case messageTypes::DATA:
           if (($a = $this->data()) != "")
           {
             foreach ($a as $key => $value)

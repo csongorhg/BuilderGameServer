@@ -226,14 +226,25 @@ namespace BuilderGameServer
     private function fight($battleid)
     {
 
-         $attacker = $this->sqla->query("select `data`.soldier from `data` inner join online on `data`.id = online.offensedata inner join battle on online.userid = battle.attackerid");
-        $deffender = $this->sqla->query("select `data`.soldier from `data` inner join online on `data`.id = online.defensedata inner join battle on online.userid = battle.defenderid");
-
+         $attacker = $this->sqla->egy_mezo_kiolvas("select soldier from  " . self::tableData . " inner join online on " . self::tableData . ".id = " . self::tableOnline . ".offensedata inner join battle on " . self::tableOnline . ".userid = " . self::tableBattle . ".attackerid");
+        $deffender = $this->sqla->egy_mezo_kiolvas("select soldier from  " . self::tableData . " inner join online on " . self::tableData . ".id = " . self::tableOnline . ".defensedata inner join battle on " . self::tableOnline . ".userid = " . self::tableBattle . ".defenderid");
+        settype($deffender, "integer");
+        settype($attacker, "integer");
         if($attacker > $deffender){
-            $this->sqla->query("update battle set battle.attackeriswinner = 1");
+            $this->sqla->query("update " . self::tableBattle . " set battle.attackeriswinner = 1");
         }else{
-            $this->sqla->query("update battle set battle.attackeriswinner = 0");
+            $this->sqla->query("update " . self::tableBattle . " set battle.attackeriswinner = 0");
         }
+        /*
+        $output = $this->sqla->egy_rekord_kiolvas("select *, now() as datum from ". self::tableOnline . " limit 0 1;");
+        if ($output==""){
+          //Hiba, nem csak 1 rekord, vagy nincs adat
+        }else
+        {
+          $user = $output["userid"]; //userid adatbázis mező
+          $d = $output["datum"]; //userid adatbázis mező
+        }
+        */
       /*
 
 

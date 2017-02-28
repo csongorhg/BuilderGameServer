@@ -226,14 +226,37 @@ namespace BuilderGameServer
     private function fight($battleid)
     {
 
-         $attacker = $this->sqla->egy_mezo_kiolvas("select soldier from  " . self::tableData . " inner join online on " . self::tableData . ".id = " . self::tableOnline . ".offensedata inner join battle on " . self::tableOnline . ".userid = " . self::tableBattle . ".attackerid");
-        $deffender = $this->sqla->egy_mezo_kiolvas("select soldier from  " . self::tableData . " inner join online on " . self::tableData . ".id = " . self::tableOnline . ".defensedata inner join battle on " . self::tableOnline . ".userid = " . self::tableBattle . ".defenderid");
+        $defID = $this->sqla->egy_mezo_kiolvas("select defenderid from " . self::tableBattle . " where " . self::tableBattle . ".attackerid = ". $battleid . ";");
+
+        $attacker = $this->sqla->egy_mezo_kiolvas("select soldier from  " . self::tableData . " inner join online on " . self::tableData . ".id = " . self::tableOnline . ".offensedata inner join battle on " . self::tableOnline . ".userid = " . self::tableBattle . ".attackerid where " . self::tableBattle . ".attackerid = ". $battleid . ";");
+        $deffender = $this->sqla->egy_mezo_kiolvas("select soldier from  " . self::tableData . " inner join online on " . self::tableData . ".id = " . self::tableOnline . ".defensedata inner join battle on " . self::tableOnline . ".userid = " . self::tableBattle . ".defenderid where " . self::tableBattle . ".defenderid = ". $defID . ";");
+
+        $newAttackID = $this->sqla->egy_mezo_kiolvas("select newattackerdata from " . self::tableBattle . " where " . self::tableBattle . ".attackerid = ". $battleid . ";");
+        $newDeffID =$this->sqla->egy_mezo_kiolvas("select newdefenderdata from " . self::tableBattle . " where " . self::tableBattle . ".attackerid = ". $battleid . ";");
         settype($deffender, "integer");
         settype($attacker, "integer");
         if($attacker > $deffender){
-            $this->sqla->query("update " . self::tableBattle . " set battle.attackeriswinner = 1");
+            $this->sqla->query("update " . self::tableBattle . " set battle.attackeriswinner = true");
+            $valtozas = $this->sqla->egy_rekord_kiolvas("select gold,wood,stone,food from " . self::tableData . " inner join online on " . self::tableData. ".id = " . self::tableOnline . ".defensedata inner join " . self::tableBattle . " on " . self::tableOnline . ".userid = " . self::tableBattle . ".defenderid where " . self::tableBattle . ".defenderid = ". $defID . ";");
+
+            //támadó ha nyert az új adatok updateja
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".soldier = 0 where " . self::tableData . ".id = " . $newAttackID. ";");
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".gold = " . ($valtozas["gold"]/2) . " where " . self::tableData . ".id = " . $newAttackID. ";");
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".wood = " . ($valtozas["wood"]/2). " where " . self::tableData . ".id = " . $newAttackID. ";");
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".stone = " . ($valtozas["stone"]/2). " where " . self::tableData . ".id = " . $newAttackID. ";");
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".food = " . ($valtozas["food"]/2). " where " . self::tableData . ".id = " . $newAttackID. ";");
+
+            //védő veszített, update
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".soldier = 0 where " . self::tableData . ".id = " . $newDeffID. ";");
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".gold = " . ($valtozas["gold"]/2). " where " . self::tableData . ".id = " . $newDeffID. ";");
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".wood = " . ($valtozas["wood"]/2). " where " . self::tableData . ".id = " . $newDeffID. ";");
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".stone = " . ($valtozas["stone"]/2). " where " . self::tableData . ".id = " . $newDeffID. ";");
+            $this->sqla->query("update " . self::tableData . " set " . self::tableData . ".food = " . ($valtozas["food"]/2). " where " . self::tableData . ".id = " . $newDeffID. ";");
+
+
+
         }else{
-            $this->sqla->query("update " . self::tableBattle . " set battle.attackeriswinner = 0");
+            $this->sqla->query("update " . self::tableBattle . " set battle.attackeriswinner = false");
         }
         /*
         $output = $this->sqla->egy_rekord_kiolvas("select *, now() as datum from ". self::tableOnline . " limit 0 1;");

@@ -396,12 +396,27 @@ Az adatbázisban frissüljenek a rekordok a csata kimenetelének megfelelően.
     public function data()
     {
         //Valahogy igy képzeltük el, de nem állt összel
-        /*$ret = null;l
+        $ret = null;
+        
+        
+        /* ez így nem azt kérdezi le!
         $attacker = $this->sqla->egy_rekord_kiolvas("SELECT soldier, gold, stone, wood, food
                         FROM ".self::tableData." INNER JOIN ".self::tableBattle." ON id = newattackerdata");
         $defender = $this->sqla->egy_rekord_kiolvas("SELECT soldier, gold, stone, wood, food
                         FROM data INNER JOIN battle ON id = newdefenderdata");
-
+*/
+        $dataid=  $this->sqla->egy_mezo_kiolvas("select newattackerdata from ".self::tableBattle." where attackerid='".$this->userID."'");
+        if ($dataid==""){
+          $dataid=  $this->sqla->egy_mezo_kiolvas("select newdefenderdata from ".self::tableBattle." where defenderid='".$this->userID."'");        
+        }
+        if ($dataid!=""){
+          $ret = $this->sqla->egy_rekord_kiolvas("select * from ".self::tableData." where id = '".$dataid."'");
+        }
+        else
+        {
+          $this->messageOUT = messageTypes::ERROR;
+        }
+        /*
         if ($attacker != "") {
         $ret["soldier"] = $attacker["soldier"];
         $ret["gold"] = $attacker["gold"];
@@ -412,8 +427,9 @@ Az adatbázisban frissüljenek a rekordok a csata kimenetelének megfelelően.
         
         if ($defender != "") {
         $ret["newdefenderdata"] = $defender;
-        }
-      return $ret;*/
+        }*/
+        
+      return $ret;
       //A csata kimenetelének eredménye a $this->userid felhasználót érintve. Az lst()-eljáráshoz hasonlóan kel a kimenetet.
 
     }

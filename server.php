@@ -355,14 +355,7 @@ Az adatbázisban frissüljenek a rekordok a csata kimenetelének megfelelően.
       return $this->messageOUT = messageTypes::DATA;
     }
 
-    public function data($dataID, $tamado, $nyert)
-    {
-        $ret = null;
-        $output = $this->sqla->egy_rekord_kiolvas("select soldier, gold, wood, stone, food from ". self::tableData . "where id = ".$dataID." limit 1;");
-
-      //A csata kimenetelének eredménye a $this->userid felhasználót érintve. Az lst()-eljáráshoz hasonlóan kel a kimenetet.
-
-    }
+    
 
     /**
      * Elvégzi az adatbázisműveleteket.
@@ -399,9 +392,38 @@ Az adatbázisban frissüljenek a rekordok a csata kimenetelének megfelelően.
     /**
      * return Array
      */
+    
+    public function data()
+    {
+        //Valahogy igy képzeltük el, de nem állt összel
+        /*$ret = null;l
+        $attacker = $this->sqla->egy_rekord_kiolvas("SELECT soldier, gold, stone, wood, food
+                        FROM ".self::tableData." INNER JOIN ".self::tableBattle." ON id = newattackerdata");
+        $defender = $this->sqla->egy_rekord_kiolvas("SELECT soldier, gold, stone, wood, food
+                        FROM data INNER JOIN battle ON id = newdefenderdata");
+
+        if ($attacker != "") {
+        $ret["soldier"] = $attacker["soldier"];
+        $ret["gold"] = $attacker["gold"];
+        $ret["stone"] = $attacker["stone"];
+        $ret["wood"] = $attacker["wood"];
+        $ret["food"] = $attacker["food"];
+        }
+        
+        if ($defender != "") {
+        $ret["newdefenderdata"] = $defender;
+        }
+      return $ret;*/
+      //A csata kimenetelének eredménye a $this->userid felhasználót érintve. Az lst()-eljáráshoz hasonlóan kel a kimenetet.
+
+    }
+    
     private function lst()
     {
-      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from " . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . ".id where userid<>" . $this->userID . " and userid not in (select attackerid as id from " . self::tableBattle . " union select defenderid as id from " . self::tableBattle . ")");
+      $a = $this->sqla->osszes_rekord_kiolvas("select userid, name from "
+              . "" . self::tableOnline . " inner join " . self::tableUser . " on " . self::tableOnline . ".userid = " . self::tableUser . "."
+              . "id where userid<>" . $this->userID . " and userid not in (select attackerid as id from " . self::tableBattle . " "
+              . "union select defenderid as id from " . self::tableBattle . ")");
       $ret = null;
       if ($a != "")
       {
